@@ -43,4 +43,16 @@
         android:scaleType="fitCenter"
         android:layout_marginTop="16dp"/>
 
+    <ImageButton
+        android:id="@+id/switch_mode_btn"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:background="@null"
+        android:scaleType="fitCenter"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/videocamera"/>
+
 </android.support.constraint.ConstraintLayout>
