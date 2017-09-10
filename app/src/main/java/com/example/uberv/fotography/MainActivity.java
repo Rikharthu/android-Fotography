@@ -23,6 +23,7 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +32,7 @@ import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.Chronometer;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -56,7 +58,10 @@ public class MainActivity extends AppCompatActivity
     private static final String FRAGMENT_DIALOG = "dialog";
     public static final String KEY_CAMERA_FACING = "KEY_CAMERA_FACING";
     private static final int FROM_RADS_TO_DEGS = -57;
+    public static final String CHRONOMETER_LABEL_PREFIX = "REC ";
 
+    @BindView(R.id.chronometer)
+    Chronometer mChronometer;
     @BindView(R.id.switch_camera_btn)
     ImageButton mSwitchCameraBtn;
     @BindView(R.id.take_photo_btn)
@@ -384,7 +389,6 @@ public class MainActivity extends AppCompatActivity
 
     private void startRecording() {
         Timber.d("Starting recording");
-
         try {
             SurfaceTexture surfaceTexture = mTextureView.getSurfaceTexture();
             surfaceTexture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
@@ -428,9 +432,30 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void startStopChronometer(boolean isStart) {
+        if (isStart) {
+            // hide other views
+            mSwitchCameraBtn.setVisibility(View.GONE);
+            mSwitchModeBtn.setVisibility(View.GONE);
+
+            mChronometer.setVisibility(View.VISIBLE);
+            mChronometer.setBase(SystemClock.elapsedRealtime());
+            mChronometer.start();
+        } else {
+            // turn off
+            mSwitchCameraBtn.setVisibility(View.VISIBLE);
+            mSwitchModeBtn.setVisibility(View.VISIBLE);
+            mChronometer.stop();
+            mChronometer.setVisibility(View.GONE);
+        }
+    }
+
     private void stopRecording() {
         mMediaRecorder.stop();
         mMediaRecorder.reset();
+        startStopChronometer(false);
+        Timber.d("Video saved to " + mVideoFileName.getAbsolutePath());
+        Toast.makeText(this, "Video saved to " + mVideoFileName.getAbsolutePath(), Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -593,6 +618,7 @@ public class MainActivity extends AppCompatActivity
             playRecordingSound();
 
             startRecording();
+            startStopChronometer(true);
         }
     }
 

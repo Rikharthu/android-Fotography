@@ -21,27 +21,27 @@
         android:id="@+id/take_photo_btn"
         android:layout_width="64dp"
         android:layout_height="64dp"
-        app:srcCompat="@android:drawable/ic_menu_camera"
-        app:layout_constraintBottom_toBottomOf="@+id/preview"
         android:layout_marginBottom="8dp"
-        android:layout_marginRight="8dp"
-        app:layout_constraintRight_toRightOf="parent"
         android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
         android:background="@null"
         android:scaleType="fitXY"
-        app:layout_constraintLeft_toLeftOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="@+id/preview"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:srcCompat="@android:drawable/ic_menu_camera"/>
 
     <ImageButton
         android:id="@+id/switch_camera_btn"
         android:layout_width="48dp"
         android:layout_height="36dp"
-        app:srcCompat="@drawable/camera_switch_small"
         android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp"
         android:background="@null"
+        android:scaleType="fitCenter"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:scaleType="fitCenter"
-        android:layout_marginTop="16dp"/>
+        app:srcCompat="@drawable/camera_switch_small"/>
 
     <ImageButton
         android:id="@+id/switch_mode_btn"
@@ -53,6 +53,22 @@
         android:scaleType="fitCenter"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/videocamera"/>
+        app:srcCompat="@drawable/videocamera"
+        tools:visibility="gone"/>
+
+    <Chronometer
+        android:id="@+id/chronometer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/chronometer_background"
+        android:format="REC %s"
+        android:padding="6dp"
+        android:textColor="#fff"
+        android:visibility="gone"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible"/>
 
 </android.support.constraint.ConstraintLayout>
