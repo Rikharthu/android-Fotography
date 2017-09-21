@@ -117,6 +117,7 @@ public class MainActivity extends AppCompatActivity
     private Size mVideoSize;
     private MediaRecorder mMediaRecorder;
     private int mTotalRotation;
+    private int mRealTotalRotation;
     private SensorManager mSensorManager;
     private File mVideoFolder;
     private boolean mDidAskCameraPermission = false;
@@ -195,7 +196,8 @@ public class MainActivity extends AppCompatActivity
         mMediaRecorder.setVideoFrameRate(30);
         mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        mMediaRecorder.setOrientationHint(mTotalRotation);
+//        mMediaRecorder.setOrientationHint(mTotalRotation);
+        mMediaRecorder.setOrientationHint(mRealTotalRotation);
         mMediaRecorder.setOnErrorListener(new MediaRecorder.OnErrorListener() {
             @Override
             public void onError(MediaRecorder mediaRecorder, int i, int i1) {
@@ -369,10 +371,7 @@ public class MainActivity extends AppCompatActivity
 
                 return;
             }
-        } catch (
-                CameraAccessException e)
-
-        {
+        } catch (CameraAccessException e) {
             Timber.e(e);
         }
     }
@@ -648,17 +647,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void checkDeviceRotation(float[] values) {
-        float[] rotationMatrix = new float[9];
-        SensorManager.getRotationMatrixFromVector(rotationMatrix, values);
-        int worldAxisX = SensorManager.AXIS_X;
-        int worldAxisZ = SensorManager.AXIS_Z;
-        float[] adjustedRotationMatrix = new float[9];
-        SensorManager.remapCoordinateSystem(rotationMatrix, worldAxisX, worldAxisZ, adjustedRotationMatrix);
-        float[] orientation = new float[3];
-        SensorManager.getOrientation(adjustedRotationMatrix, orientation);
-        float roll = orientation[2] * FROM_RADS_TO_DEGS;
+        // TODO understand what's happening
+        float roll = calculateRoll(values);
         boolean isNegative = roll < 0;
         roll = Math.abs(roll);
+
+        int closestOrientation = calculateClosestOrientation((int) roll);
+        mRealTotalRotation = (mTotalRotation + closestOrientation + 360) % 360;
 
         if (roll > 45 && roll < 135) {
             // landscape
@@ -672,6 +667,27 @@ public class MainActivity extends AppCompatActivity
                 rotateUI(0);
             }
         }
+    }
+
+    private int calculateClosestOrientation(int rotation) {
+        int count = rotation / 45 + 1;
+        if (count % 2 != 0) {
+            count -= 1;
+        }
+        int b = 45 * count;
+        return b;
+    }
+
+    private float calculateRoll(float[] values) {
+        float[] rotationMatrix = new float[9];
+        SensorManager.getRotationMatrixFromVector(rotationMatrix, values);
+        int worldAxisX = SensorManager.AXIS_X;
+        int worldAxisZ = SensorManager.AXIS_Z;
+        float[] adjustedRotationMatrix = new float[9];
+        SensorManager.remapCoordinateSystem(rotationMatrix, worldAxisX, worldAxisZ, adjustedRotationMatrix);
+        float[] orientation = new float[3];
+        SensorManager.getOrientation(adjustedRotationMatrix, orientation);
+        return orientation[2] * FROM_RADS_TO_DEGS;
     }
 
     @Override
