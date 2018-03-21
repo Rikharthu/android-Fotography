@@ -3,6 +3,9 @@ package com.example.uberv.fotography;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -17,6 +20,7 @@ import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
@@ -40,6 +44,7 @@ import com.example.uberv.fotography.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -457,6 +462,19 @@ public class MainActivity extends AppCompatActivity
         Toast.makeText(this, "Video saved to " + mVideoFileName.getAbsolutePath(), Toast.LENGTH_SHORT).show();
     }
 
+    private byte[] convertYUV420888ToNV21(Image imgYUV420) {
+        // Converting YUV_420_888 data to YUV_420_SP (NV21).
+        byte[] data;
+        ByteBuffer buffer0 = imgYUV420.getPlanes()[0].getBuffer();
+        ByteBuffer buffer2 = imgYUV420.getPlanes()[2].getBuffer();
+        int buffer0_size = buffer0.remaining();
+        int buffer2_size = buffer2.remaining();
+        data = new byte[buffer0_size + buffer2_size];
+        buffer0.get(data, 0, buffer0_size);
+        buffer2.get(data, buffer0_size, buffer2_size);
+        return data;
+    }
+
     /**
      * Constructs a preview Camera 2 request
      */
@@ -467,6 +485,19 @@ public class MainActivity extends AppCompatActivity
         surfaceTexture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
         Surface previewSurface = new Surface(surfaceTexture);
 
+        mImageReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 1);
+        mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
+            @Override
+            public void onImageAvailable(ImageReader reader) {
+                Image img = reader.acquireNextImage();
+                Timber.d("New image available: " + img);
+                if (img != null) {
+                    byte[] imageBytes = convertYUV420888ToNV21(img);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+                    img.close();
+                }
+            }
+        }, mBackgroundHandler);
         try {
             // Create a capture request that contains configuration for the capture hardware (sensors,lens,flash),
             // the processing pipeline, the control algorithms and output buffers (surface)
@@ -474,7 +505,7 @@ public class MainActivity extends AppCompatActivity
             mCaptureRequestBuilder.addTarget(previewSurface);
 
             // configure a capture sessions that is used for capturing images from the camera
-            mCameraDevice.createCaptureSession(Arrays.asList(previewSurface/*,mImageReader.getSurface()*/), // set of output surfaces
+            mCameraDevice.createCaptureSession(Arrays.asList(previewSurface, mImageReader.getSurface()), // set of output surfaces
                     new CameraCaptureSession.StateCallback() {
                         @Override
                         public void onConfigured(@NonNull CameraCaptureSession session) {
